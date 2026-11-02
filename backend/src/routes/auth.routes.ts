@@ -12,4 +12,8 @@ router.post("/login", authLimiter, validateBody(loginSchema), AuthController.log
 router.post("/logout", AuthController.logout);
 router.get("/me", authenticate, AuthController.getMe);
 
+// Google OAuth 2.0 endpoints
+router.get("/google", AuthController.getGoogleAuthUrl);
+router.get("/google/callback", AuthController.googleCallback);
+
 export default router;

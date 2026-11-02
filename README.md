@@ -19,7 +19,7 @@ Engineered specifically as a full-stack technical assessment for **The Web Plant
 - **Assessment Attribution**: Developed specifically for the technical evaluation by **The Web Plant** (without implying official ownership or publishing by The Web Plant).
 - **Architecture**: Modular Express backend with Mongoose & Zod, coupled with a Next.js (App Router) TypeScript frontend powered by Redux Toolkit and Tailwind CSS.
 - **Security-First**: HttpOnly, SameSite, Secure JWT cookie authentication, bcrypt password hashing, input validation, and user ownership authorization on every protected resource.
-- **Quality Assured**: 23 automated tests verifying authentication, project CRUD, task operations, status & date filtering, sorting, validation failures, and strict user isolation.
+- **Quality Assured**: 27 automated tests verifying authentication, Google OAuth initiation and error handling, project CRUD, task operations, status & date filtering, sorting, password complexity validation, and strict user isolation.
 
 ---
 
@@ -208,6 +208,9 @@ MONGODB_URI=mongodb://127.0.0.1:27017/plantboard
 JWT_SECRET=plantboard_super_secret_jwt_key_2026_dev_secure
 JWT_EXPIRES_IN=1d
 CLIENT_URL=http://localhost:3000
+GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
 ```
 
 > **Using MongoDB Atlas**:  
@@ -226,6 +229,19 @@ Default configuration:
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
 ```
+
+### Google OAuth 2.0 Credentials Setup
+To enable "Continue with Google" in development:
+1. Navigate to the [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
+2. Create a project and configure the **OAuth consent screen** (User Type: External, scope: `email`, `profile`, `openid`).
+3. Create an **OAuth client ID** (Application type: **Web application**).
+4. Set **Authorized JavaScript origins**:
+   - `http://localhost:3000`
+   - `http://localhost:5000`
+5. Set **Authorized redirect URIs**:
+   - `http://localhost:5000/api/auth/google/callback`
+6. Copy the generated **Client ID** and **Client Secret** into `backend/.env`.
+7. Restart the backend server. If Google OAuth credentials are not provided, the server gracefully redirects with a clear setup message and email/password authentication remains fully operational.
 
 ---
 
@@ -277,12 +293,14 @@ npm run dev
 | `GET` | `/health` | Returns service status, timestamp, and uptime | No |
 
 ### Authentication (`/api/auth`)
-| Method | Endpoint | Description | Request Body | Auth Required |
+| Method | Endpoint | Description | Request Body / Query | Auth Required |
 |---|---|---|---|---|
 | `POST` | `/api/auth/register` | Register new user & sets HttpOnly cookie | `{ name, email, password }` | No |
 | `POST` | `/api/auth/login` | Authenticate & sets HttpOnly cookie | `{ email, password }` | No |
 | `POST` | `/api/auth/logout` | Clears authentication cookie | None | No |
 | `GET` | `/api/auth/me` | Fetches current user profile | None | **Yes** |
+| `GET` | `/api/auth/google` | Initiates Google OAuth consent with CSRF state | None | No |
+| `GET` | `/api/auth/google/callback` | Handles Google OAuth callback & sets JWT cookie | `?code=&state=` | No |
 
 ### Projects (`/api/projects`)
 | Method | Endpoint | Description | Query / Body | Auth Required |
@@ -320,7 +338,7 @@ cd backend
 npm test
 ```
 
-**Test Suite Coverage (23 Passing Tests)**:
+**Test Suite Coverage (27 Passing Tests)**:
 1. `POST /api/auth/register` — registers user and sets HttpOnly cookie.
 2. `POST /api/auth/register` — rejects duplicate email with `409 Conflict`.
 3. `POST /api/auth/register` — enforces Zod validation (email format, password min length, name).
@@ -329,21 +347,25 @@ npm test
 6. `POST /api/auth/login` — rejects nonexistent email with `401 Unauthorized`.
 7. `GET /api/auth/me` — verifies session via cookie or `Authorization: Bearer` header.
 8. `GET /api/auth/me` — rejects unauthenticated requests with `401`.
-9. `POST /api/auth/logout` — clears authentication cookie.
-10. `GET /api/health` — returns operational status and timestamp.
-11. `POST /api/projects` — creates project.
-12. `POST /api/projects` — validates required fields.
-13. `GET /api/projects` — lists user projects with computed task counts and progress %.
-14. `GET /api/projects` — filters projects by search keyword.
-15. `PUT /api/projects/:id` — updates project details.
-16. `CRITICAL: Project Ownership Isolation` — guarantees User B cannot read, update, or delete User A's project (returns `403 Forbidden`).
-17. `DELETE /api/projects/:id` — deletes project and cascade-deletes all associated tasks.
-18. `POST /api/projects/:projectId/tasks` — creates task with status and dueDate.
-19. `PUT /api/tasks/:id` — updates status and clears dueDate.
-20. `DELETE /api/tasks/:id` — removes task.
-21. `CRITICAL: Task Ownership Isolation` — guarantees User B cannot read, update, delete, or create tasks in User A's project.
-22. `GET /api/tasks` — filters by status, due date (`overdue`, `today`, `upcoming`), and sorting.
-23. `GET /api/tasks/dashboard-stats` — computes accurate real-time dashboard statistics.
+9. `POST /api/auth/register` — rejects passwords lacking complexity requirements (missing uppercase, number, special char).
+10. `POST /api/auth/logout` — clears authentication cookie.
+11. `GET /api/auth/google` — redirects to login error when OAuth is unconfigured.
+12. `GET /api/auth/google` — initiates OAuth redirect and sets `oauth_state` cookie when configured.
+13. `GET /api/auth/google/callback` — handles user cancellation gracefully.
+14. `GET /api/health` — returns operational status and timestamp.
+15. `POST /api/projects` — creates project.
+16. `POST /api/projects` — validates required fields.
+17. `GET /api/projects` — lists user projects with computed task counts and progress %.
+18. `GET /api/projects` — filters projects by search keyword.
+19. `PUT /api/projects/:id` — updates project details.
+20. `CRITICAL: Project Ownership Isolation` — guarantees User B cannot read, update, or delete User A's project (returns `403 Forbidden`).
+21. `DELETE /api/projects/:id` — deletes project and cascade-deletes all associated tasks.
+22. `POST /api/projects/:projectId/tasks` — creates task with status and dueDate.
+23. `PUT /api/tasks/:id` — updates status and clears dueDate.
+24. `DELETE /api/tasks/:id` — removes task.
+25. `CRITICAL: Task Ownership Isolation` — guarantees User B cannot read, update, delete, or create tasks in User A's project.
+26. `GET /api/tasks` — filters by status, due date (`overdue`, `today`, `upcoming`), and sorting.
+27. `GET /api/tasks/dashboard-stats` — computes accurate real-time dashboard statistics.
 
 ### Running Backend Typecheck & Build
 ```bash

@@ -122,9 +122,68 @@ describe("Authentication API Endpoints", () => {
     assert.equal(res.body.success, false);
   });
 
+  it("POST /api/auth/register - rejects passwords lacking complexity requirements", async () => {
+    // Missing uppercase
+    const resNoUpper = await request(app).post("/api/auth/register").send({
+      name: "Jane Doe",
+      email: "jane1@plantboard.dev",
+      password: "password123!",
+    });
+    assert.equal(resNoUpper.status, 400);
+
+    // Missing special character
+    const resNoSpecial = await request(app).post("/api/auth/register").send({
+      name: "Jane Doe",
+      email: "jane2@plantboard.dev",
+      password: "Password123",
+    });
+    assert.equal(resNoSpecial.status, 400);
+
+    // Missing number
+    const resNoNum = await request(app).post("/api/auth/register").send({
+      name: "Jane Doe",
+      email: "jane3@plantboard.dev",
+      password: "Password!",
+    });
+    assert.equal(resNoNum.status, 400);
+  });
+
   it("POST /api/auth/logout - successfully clears auth cookie", async () => {
     const res = await request(app).post("/api/auth/logout");
     assert.equal(res.status, 200);
     assert.equal(res.body.success, true);
+  });
+
+  it("GET /api/auth/google - redirects to login error when OAuth is unconfigured", async () => {
+    const origId = process.env.GOOGLE_CLIENT_ID;
+    delete process.env.GOOGLE_CLIENT_ID;
+    const res = await request(app).get("/api/auth/google");
+    assert.equal(res.status, 302);
+    assert.match(res.headers.location, /\/login\?error=/);
+    if (origId) process.env.GOOGLE_CLIENT_ID = origId;
+  });
+
+  it("GET /api/auth/google - initiates OAuth redirect and sets oauth_state cookie when configured", async () => {
+    process.env.GOOGLE_CLIENT_ID = "mock-client-id.apps.googleusercontent.com";
+    process.env.GOOGLE_CLIENT_SECRET = "mock-client-secret";
+
+    const res = await request(app).get("/api/auth/google");
+    assert.equal(res.status, 302);
+    assert.ok(res.headers.location);
+    assert.match(res.headers.location, /accounts\.google\.com\/o\/oauth2\/v2\/auth/);
+
+    const cookies = res.headers["set-cookie"] || [];
+    assert.ok(cookies.some((c: string) => c.includes("oauth_state=")));
+    assert.ok(cookies.some((c: string) => c.includes("HttpOnly")));
+
+    delete process.env.GOOGLE_CLIENT_ID;
+    delete process.env.GOOGLE_CLIENT_SECRET;
+  });
+
+  it("GET /api/auth/google/callback - handles user cancellation gracefully", async () => {
+    const res = await request(app).get("/api/auth/google/callback?error=access_denied");
+    assert.equal(res.status, 302);
+    assert.ok(res.headers.location);
+    assert.match(res.headers.location, /\/login\?error=/);
   });
 });

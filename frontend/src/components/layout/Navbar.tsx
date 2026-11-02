@@ -43,11 +43,6 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/60 text-emerald-800 text-xs font-medium">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
-          The Web Plant Technical Assessment
-        </div>
-
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
     </header>

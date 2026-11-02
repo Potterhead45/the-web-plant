@@ -94,7 +94,7 @@ export default function LandingPage() {
             href="/login"
             className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-sm font-semibold border border-slate-200 transition-colors"
           >
-            Sign In with Demo
+            Sign In
           </Link>
         </div>
 
@@ -134,33 +134,6 @@ export default function LandingPage() {
             <p className="text-xs text-slate-600 leading-relaxed">
               HttpOnly JWT authentication, bcrypt password hashing, Zod validations, rate limiting, and strict multi-tenant ownership isolation.
             </p>
-          </div>
-        </div>
-
-        {/* Tech Stack Bar */}
-        <div className="mt-16 pt-12 border-t border-slate-200/80 w-full max-w-5xl">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-6">
-            Architected with modern full-stack standards
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {[
-              "Next.js App Router",
-              "React 19",
-              "TypeScript",
-              "Tailwind CSS v4",
-              "Redux Toolkit",
-              "Node.js Express",
-              "MongoDB Mongoose",
-              "Zod Validation",
-              "HttpOnly JWT",
-            ].map((tech) => (
-              <span
-                key={tech}
-                className="px-3.5 py-1.5 rounded-xl bg-white border border-slate-200/90 text-xs font-semibold text-slate-700 shadow-2xs"
-              >
-                {tech}
-              </span>
-            ))}
           </div>
         </div>
       </section>
