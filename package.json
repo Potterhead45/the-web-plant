@@ -1,0 +1,29 @@
+{
+  "name": "plantboard",
+  "version": "1.0.0",
+  "description": "PlantBoard — Mini Project Manager | Technical Assessment for The Web Plant",
+  "private": true,
+  "scripts": {
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build:backend": "npm --prefix backend run build",
+    "build:frontend": "npm --prefix frontend run build",
+    "build": "npm run build:backend && npm run build:frontend",
+    "test:backend": "cd backend && npm test",
+    "test": "npm run test:backend",
+    "lint:frontend": "cd frontend && npm run lint",
+    "lint": "npm run lint:frontend",
+    "typecheck:backend": "cd backend && npm run typecheck",
+    "typecheck": "npm run typecheck:backend"
+  },
+  "keywords": [
+    "project-management",
+    "kanban",
+    "nextjs",
+    "express",
+    "mongodb",
+    "typescript"
+  ],
+  "author": "Potterhead45",
+  "license": "ISC"
+}
